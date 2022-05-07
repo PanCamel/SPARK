@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>search</title>
+    <style>
+        body{
+            font-size: 22px;
+            background-color: #212D40;
+            color: #D66853;
+        }
+        table{
+            width: 80%;
+            margin: 50px;
+            color: #D66853;
+            border-collapse: collapse;
+        }
+        #table{
+            width: 80%;
+            margin: 50px;
+            color: #D66853;
+            border-collapse: collapse;
+        }
+        td{
+            width: auto;
+            padding: 30px;
+            border-bottom: 2px solid dimgray;
+            text-align: center;
+            color: black;
+        }
+        tr{
+            border-bottom: 2px solid dimgray;
+            font-weight: bold;
+            color: dimgray;
+            margin-bottom: 20px;
+            font-size: 25px;
+        }
+        button{
+            padding-left: 5px;
+            padding-right: 5px;
+            border: solid 1px #7D4E57;
+            background-color: transparent;
+            font-size: 22px;
+            color: #D66853;
+            cursor: pointer;
+            border-radius: 25px;
+            margin-left: 20px;
+        }
+        a{
+            margin-left: 40px;
+            margin-top: 20px;
+        }
+        #bt{
+            color: #D66853;
+            width: auto;
+            border: solid 1px #7D4E57;
+            background-color: transparent;
+            margin-top: 10px;
+        }
+        div{
+            width: 100%;
+            justify-items: center;
+            margin-left: 40px;
+        }
+        input, select{
+            height: 40px;
+            width: 120px;
+            font-size: 22px;
+            margin-left: 30px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+<h1>search invoices page</h1>
+<div style="display: inline-flex">
+    <a style="margin-left: 0px" href="index.html">index</a>
+    <a href="cars.html">edit/update cars</a>
+    <a href="admin.html">generate invoices</a>
+    <a href="search.html">search (nie działa do końca)</a>
+</div>
+<div id="page">
+    <button id="bt">generuj losowo bazę samochodów</button>
+    <div style="display: inline-flex">
+        <p>faktura za wszystki auta</p>
+        <button id="all_cars">generuj fakturę</button>
+        <a>pobierz</a>
+    </div>
+    <br/>
+    <div style="display: inline-flex">
+        <p>faktura - auta z danego rocznika</p>
+        <select id="select">
+            <option value="2001">2001</option>
+            <option value="2002">2002</option>
+            <option value="2003">2003</option>
+            <option value="2004">2004</option>
+        </select>
+        <button id="cars_one_year">generuj fakturę</button>
+        <a>pobierz</a>
+    </div>
+    <br/>
+    <div style="display: inline-flex">
+        <p>faktura - auta z danego zakresu cen</p>
+        <input type="text" value="10000" id="od">
+        <input type="text" value="30000" id="do">
+        <button id="cars_price_range">generuj fakturę</button>
+        <a>pobierz</a>
+    </div>
+</div>
+<table id="table"></table>
+
+<script>
+    document.getElementById("bt").onclick = async () => {
+        let json = await generateCars()
+        let obj = JSON.parse(json)
+        console.log(obj)
+        await loadData(obj)
+    }
+
+    document.getElementById("all_cars").onclick = async () => {
+        let json = await invoiceAll("invoice_all_cars", parseInt(document.getElementById("od").value), parseInt(document.getElementById("do").value), parseInt(document.getElementById("select").value))
+    }
+
+    document.getElementById("cars_one_year").onclick = async () => {
+        let json = await invoiceAll("invoice_all_cars_by_year", parseInt(document.getElementById("od").value), parseInt(document.getElementById("do").value), parseInt(document.getElementById("select").value))
+        alert("year")
+    }
+
+    document.getElementById("cars_price_range").onclick = async () => {
+        let json = await invoice("invoice_all_cars_by_price", parseInt(document.getElementById("od").value), parseInt(document.getElementById("do").value), parseInt(document.getElementById("select").value))
+        alert("price")
+    }
+
+    async function loadData(obj){
+        let dane = obj
+        console.log(dane);
+        document.getElementById("page").style.display="none";
+
+        var body = document.getElementsByTagName('body')[0];
+        var tbl = document.getElementById('table');
+        tbl.innerHTML="";
+        var tbdy = document.createElement('tbody');
+
+        var tr = document.createElement('tr');
+        var th = document.createElement('th');
+        th.innerHTML = "lp";
+        tr.appendChild(th)
+        th = document.createElement('th');
+        th.innerHTML = "marka";
+        tr.appendChild(th)
+        th = document.createElement('th');
+        th.innerHTML = "rok";
+        tr.appendChild(th)
+        th = document.createElement('th');
+        th.innerHTML = "poduszki";
+        tr.appendChild(th)
+        th = document.createElement('th');
+        th.innerHTML = "kolor";
+        tr.appendChild(th)
+        th = document.createElement('th');
+        th.innerHTML = "zdjęcie";
+        tr.appendChild(th)
+        th = document.createElement('th');
+        th.innerHTML = "data sprzedaży";
+        tr.appendChild(th)
+        th = document.createElement('th');
+        th.innerHTML = "cena";
+        tr.appendChild(th)
+        th = document.createElement('th');
+        th.innerHTML = "vat";
+        tr.appendChild(th)
+        tbdy.appendChild(tr);
+        for (var i = 0; i < dane.length; i++) {
+            var tr = document.createElement('tr');
+
+            var td = document.createElement('td');
+            td.innerHTML = dane[i].id;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].model;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].rok;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].airbags[0].description + ":" + dane[i].airbags[0].value + "<br>" + dane[i].airbags[1].description + ":" + dane[i].airbags[1].value + "<br>" + dane[i].airbags[2].description + ":" + dane[i].airbags[2].value + "<br>" + dane[i].airbags[3].description + ":" + dane[i].airbags[3].value;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.style.width = '100px';
+            td.setAttribute("style", "background-color: " + dane[i].kolor + ";")
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            var img = document.createElement("img")
+            img.src="src/main/resources/cars/" + dane[i].model + ".jpg";
+            td.appendChild(img)
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].data.full;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].data.price;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].data.vat;
+            tr.appendChild(td)
+
+
+            tbdy.appendChild(tr);
+        }
+        tbl.appendChild(tbdy);
+        body.appendChild(tbl);
+    }
+
+    generateCars = async () => {
+        const options = {
+            method: "POST",
+        };
+        let response = await fetch("/searchgenerate", options);
+        if(!response.ok){
+            return response.status
+        }
+        else{
+            return await response.text()
+        }
+    }
+
+    invoiceAll = async (rodzaj, zakresOd, zakresDo, rok) => {
+        const dane = JSON.stringify({
+            zakresDo: zakresDo,
+            zakresOd: zakresOd,
+            rok: rok,
+            rodzaj: rodzaj,
+        })
+        console.log(dane)
+        const options = {
+            method: "POST",
+            body: dane,
+        }
+        let response = await fetch("/invoiceall", options);
+        if(!response.ok){
+            return response.status
+        }
+        else{
+            return await response.text()
+        }
+    }
+
+</script>
+</body>
+</html>

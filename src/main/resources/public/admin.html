@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin</title>
+    <style>
+        body{
+            font-size: 22px;
+            background-color: #212D40;
+            color: #D66853;
+        }
+        table{
+            width: 80%;
+            margin: 50px;
+            color: #D66853;
+        }
+        td{
+            border: solid 1px #7D4E57;
+            width: auto;
+            padding: 30px;
+        }
+        button{
+            padding-left: 10px;
+            padding-right: 10px;
+            border: solid 1px #7D4E57;
+            background-color: transparent;
+            font-size: 22px;
+            color: #D66853;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 25px;
+        }
+        a{
+            margin-left: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>admin page</h1>
+    <div style="display: inline-flex">
+        <button id="bt">generuj losowo bazę samochodów</button>
+        <a href="index.html">index</a>
+        <a href="cars.html">delete/update cars</a>
+        <a href="search.html">search (nie działa do końca)</a>
+    </div>
+    <table id="table"></table>
+<script>
+    window.onload = async () => {
+        let json = await fetchPostAsync()
+        let obj = JSON.parse(json)
+        await loadData(obj)
+    }
+
+    document.getElementById("bt").onclick = async () => {
+        let json = await generateCars()
+        let obj = JSON.parse(json)
+        console.log(obj)
+        await loadData(obj)
+    }
+
+    async function loadData(obj){
+        let dane = obj
+        console.log(dane);
+        var body = document.getElementsByTagName('body')[0];
+        var tbl = document.getElementById('table');
+        tbl.innerHTML="";
+        var tbdy = document.createElement('tbody');
+        for (var i = 0; i < dane.length; i++) {
+            var tr = document.createElement('tr');
+
+            var td = document.createElement('td');
+            td.appendChild(document.createTextNode(dane[i].id))
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.appendChild(document.createTextNode(dane[i].uuid))
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].model;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].rok;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].airbags[0].description + ":" + dane[i].airbags[0].value + "<br>" + dane[i].airbags[1].description + ":" + dane[i].airbags[1].value + "<br>" + dane[i].airbags[2].description + ":" + dane[i].airbags[2].value + "<br>" + dane[i].airbags[3].description + ":" + dane[i].airbags[3].value;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.style.width = '100px';
+            td.setAttribute("style", "background-color: " + dane[i].kolor + ";")
+            tr.appendChild(td)
+
+            let idek = dane[i].id
+
+            td = document.createElement('td');
+            var btn = document.createElement("button")
+            btn.innerHTML="generuj fakturę VAT"
+            btn.addEventListener("click", async function () {
+                let json = await invoice(idek)
+                let obj = JSON.parse(json)
+                await loadData(obj)
+            });
+            td.appendChild(btn)
+            tr.appendChild(td)
+
+
+            td = document.createElement('td');
+            var a = document.createElement("a");
+            if(dane[i].faktura !== false){
+                a.href = "/invoices/" + dane[i].uuid
+                a.innerHTML = "pobierz"
+            }
+            td.appendChild(a)
+            tr.appendChild(td)
+
+
+            tbdy.appendChild(tr);
+        }
+        tbl.appendChild(tbdy);
+        body.appendChild(tbl);
+    }
+
+
+    generateCars = async () => {
+        const options = {
+            method: "POST",
+        };
+        let response = await fetch("/generate", options);
+        if(!response.ok){
+            return response.status
+        }
+        else{
+            return await response.text()
+        }
+    }
+
+    invoice = async (id) => {
+        const dane = JSON.stringify({
+            id: id,
+        })
+        console.log(dane)
+        const options = {
+            method: "POST",
+            body: dane,
+        }
+        let response = await fetch("/invoice", options);
+        if(!response.ok){
+            return response.status
+        }
+        else{
+            return await response.text()
+        }
+    }
+
+    fetchPostAsync = async () => {
+        const options = {
+            method: "GET",
+        };
+        let response = await fetch("/generatedjson", options)
+        if (!response.ok)
+            return response.status
+        else{
+            return await response.text() // response.json
+
+        }
+    }
+</script>
+</body>
+</html>

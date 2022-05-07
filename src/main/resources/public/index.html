@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+    <style>
+        body{
+            font-size: 22px;
+            background-color: #212D40;
+            color: #364156;
+        }
+
+        .box{
+            width: 100%;
+            height: 100%;
+            background-color: #D66853 ;
+        }
+
+
+        .check{
+           width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>T: Spark server, post, fetch</h1>
+<p>Model:</p>
+<input type="text" id="model">
+<p>Rok:
+<select id="select">
+    <option value="2001">2001</option>
+    <option value="2002">2002</option>
+    <option value="2003">2003</option>
+    <option value="2004">2004</option>
+</select>
+</p>
+<p>Poduszki powietrzne: Kierowca | Pasażer | Tylna kanapa | Boczne z tyłu: </p>
+<input type="checkbox" id="check1" name="check1" class="check">
+<input type="checkbox" id="check2" name="check2" class="check">
+<input type="checkbox" id="check3" name="check3" class="check">
+<input type="checkbox" id="check4" name="check4" class="check">
+<p>Kolor:</p>
+<input type="color" id="color"> <br/>
+<button onclick="fetchPostAsync()" id="bt">dodaj</button> <br/>
+
+</div>
+
+<div style="display: inline-flex">
+    <a href="cars.html">strona z danymi </a>
+    <a href="admin.html"> admin</a>
+</div>
+
+<script>
+    document.getElementById("bt").onclick = async () => {
+        let json = await fetchPostAsync()
+        let obj = JSON.parse(json)
+        alert(JSON.stringify(obj, null, 5))
+    }
+
+
+    console.log(document.getElementById("color").value);
+    fetchPostAsync = async () => {
+        let airbags = [
+            {
+                "description": "kierowca",
+                "value": document.getElementById("check1").checked
+            },
+            {
+                "description": "pasażer",
+                "value": document.getElementById("check2").checked
+            },
+            {
+                "description": "kanapa",
+                "value": document.getElementById("check3").checked
+            },
+            {
+                "description": "boczne",
+                "value": document.getElementById("check4").checked
+            }
+        ]
+        const data = JSON.stringify({
+            model: document.getElementById("model").value,
+            airbags: airbags,
+            rok: document.getElementById("select").value,
+            kolor: document.getElementById("color").value,
+        })
+        const options = {
+            method: "POST",
+            body: data,
+        };
+        let response = await fetch("/add", options)
+        if (!response.ok)
+            return response.status
+        else{
+            return await response.text() // response.json
+
+        }
+
+
+    }
+</script>
+</body>
+</html>

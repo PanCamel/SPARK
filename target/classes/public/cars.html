@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Cars</title>
+    <style>
+        body{
+            font-size: 22px;
+            background-color: #212D40;
+            color: #D66853;
+        }
+        table{
+            width: 80%;
+            margin: 50px;
+            color: #D66853;
+        }
+        td{
+            border: solid 1px #7D4E57;
+            width: auto;
+            padding: 30px;
+        }
+        button{
+            padding-left: 10px;
+            padding-right: 10px;
+            border: solid 1px #7D4E57;
+            background-color: transparent;
+            font-size: 22px;
+            color: red;
+            width: 100%;
+            cursor: pointer;
+        }
+        a{
+            margin-left: 30px;
+        }
+        #id_confrmdiv
+        {
+            display: none;
+            background-color: #eee;
+            border-radius: 5px;
+            border: 1px solid #aaa;
+            position: fixed;
+            width: 300px;
+            left: 50%;
+            margin-left: -150px;
+            padding: 6px 8px 8px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        #id_confrmdiv button {
+            display: inline-block;
+        }
+
+        #id_confrmdiv .button:hover
+        {
+            background-color: #df45a2;
+        }
+
+        #confirmBox .message
+        {
+            text-align: left;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+<h1>Wszystkie samochody</h1>
+<div style="display: inline-flex">
+    <a href="index.html">Strona Startowa</a>
+    <a href="admin.html">Admin</a>
+    <a href="search.html">search (nie działa do końca)</a>
+</div>
+<table id="table"></table>
+<div id="blank"></div>
+<div id="id_confrmdiv">
+    <input type="text" id="model" style="width: 250px; height: 30px; font-family: Garamond; font-size: 22px; margin: 10px"><br/>
+    <select id="rok" style="width: 250px; height: 30px; font-family: Garamond; font-size: 22px; margin: 10px">
+        <option value="2001">2001</option>
+        <option value="2002">2002</option>
+        <option value="2003">2003</option>
+        <option value="2004">2004</option>
+    </select><br/>
+    <div style="display: inline-flex">
+        <button id="id_truebtn" style="margin: 20px">update</button>
+        <button id="id_falsebtn" style="margin: 20px">cancel</button>
+    </div>
+</div>
+
+<script>
+    window.onload = loadData;
+
+    async function loadData(){
+        let json = await fetchPostAsync()
+        let dane = JSON.parse(json)
+        console.log(dane);
+        var body = document.getElementsByTagName('body')[0];
+        var tbl = document.getElementById('table');
+        tbl.innerHTML="";
+        var tbdy = document.createElement('tbody');
+        for (var i = 0; i < dane.length; i++) {
+            var tr = document.createElement('tr');
+
+            var td = document.createElement('td');
+            td.appendChild(document.createTextNode(dane[i].id))
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.appendChild(document.createTextNode(dane[i].uuid))
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].model;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].rok;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.innerHTML = dane[i].airbags[0].description + ":" + dane[i].airbags[0].value + "<br>" + dane[i].airbags[1].description + ":" + dane[i].airbags[1].value + "<br>" + dane[i].airbags[2].description + ":" + dane[i].airbags[2].value + "<br>" + dane[i].airbags[3].description + ":" + dane[i].airbags[3].value;
+            tr.appendChild(td)
+
+            td = document.createElement('td');
+            td.style.width = '100px';
+            td.setAttribute("style", "background-color: " + dane[i].kolor + ";")
+            tr.appendChild(td)
+
+            let idek = dane[i].id
+
+            td = document.createElement('td');
+            var btn = document.createElement("button")
+            btn.innerHTML="delete car"
+            btn.name = dane[i].id
+            btn.addEventListener("click", async function () {
+                await deleteCar(idek)
+                await loadData()
+            });
+            td.appendChild(btn)
+            tr.appendChild(td)
+
+            let modelek = dane[i].model
+            let roczek = dane[i].rok
+
+            td = document.createElement('td');
+            var btn = document.createElement("button");
+            btn.innerHTML="update car";
+            btn.addEventListener("click", async function () {
+                document.getElementById('id_confrmdiv').style.display="block"; //this is the replace of this line
+                let blank = document.getElementById("blank");
+                document.getElementById("model").value = modelek;
+                document.getElementById("rok").value = roczek;
+                blank.setAttribute('style','position: absolute; background-color:black; width: 100%; height: 100%; top:0; left:0; opacity: 0.5');
+
+                document.getElementById('id_truebtn').onclick = async function(){
+                    await updateCar(idek, document.getElementById("model").value, parseInt(document.getElementById("rok").value))
+                    await loadData();
+                    blank.setAttribute('style', 'display: none')
+                    document.getElementById('id_confrmdiv').style.display="none";
+                };
+                document.getElementById('id_falsebtn').onclick = function(){
+                    blank.setAttribute('style', 'display: none');
+                    document.getElementById('id_confrmdiv').style.display="none";
+                };
+
+
+            });
+            td.appendChild(btn)
+            tr.appendChild(td)
+
+            tbdy.appendChild(tr);
+        }
+        tbl.appendChild(tbdy);
+        body.appendChild(tbl);
+    }
+
+    fetchPostAsync = async () => {
+        const options = {
+            method: "GET",
+        };
+        let response = await fetch("/json", options)
+        if (!response.ok)
+            return response.status
+        else{
+            return await response.text() // response.json
+
+        }
+    }
+
+    deleteCar = async (id) => {
+        console.log(id)
+        const dane = JSON.stringify({
+            id: id,
+        })
+        console.log(dane)
+        const options = {
+            method: "POST",
+            body: dane,
+        }
+        let response = await fetch("/delete", options)
+        if (!response.ok)
+            return response.status
+        else{
+            return await response.text() // response.json
+
+        }
+    }
+
+    updateCar = async (id, model, rok) => {
+        console.log(id)
+        const dane = JSON.stringify({
+            id: id,
+            model: model,
+            rok: rok,
+        })
+        console.log(dane)
+        const options = {
+            method: "POST",
+            body: dane,
+        }
+        let response = await fetch("/update", options)
+        if (!response.ok)
+            return response.status
+        else{
+            return await response.text() // response.json
+
+        }
+    }
+</script>
+</body>
+</html>
